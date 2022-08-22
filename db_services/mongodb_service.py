@@ -11,9 +11,9 @@ class MongodbService(IDbService):
         collection = self.get_collection(db_name, collection_name)
         return collection.find_one(query)
 
-    def find_many(self, db_name: str, collection_name: str, query: dict) -> dict:
+    def find_all(self, db_name: str, collection_name: str) -> dict:
         collection = self.get_collection(db_name, collection_name)
-        return collection.find(query)
+        return collection.find()
 
     def insert_one(self, db_name: str, collection_name: str, record: dict) -> ObjectId:
         collection = self.get_collection(db_name, collection_name)
