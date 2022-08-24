@@ -11,7 +11,7 @@ class MongodbService(IDbService):
         collection = self.get_collection(db_name, collection_name)
         return collection.find_one(query)
 
-    def find_many(self, db_name: str, collection_name: str, query: dict) -> dict:
+    def find(self, db_name: str, collection_name: str, query: dict) -> dict:
         collection = self.get_collection(db_name, collection_name)
         return collection.find(query)
 
@@ -46,4 +46,3 @@ class MongodbService(IDbService):
         if collection_name in collection_list:
             return True
         return False
-
