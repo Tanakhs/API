@@ -7,7 +7,7 @@ class IDbService:
     def find_one(self, db_name: str, collection_name: str, query: str) -> dict: raise NotImplementedError
 
     @abstractmethod
-    def find_all(self, db_name: str, collection_name: str) -> dict: raise NotImplementedError
+    def find(self, db_name: str, collection_name: str, query: str) -> dict: raise NotImplementedError
 
     @abstractmethod
     def insert_one(self, db_name: str, collection_name: str, record: dict) -> str: raise NotImplementedError

@@ -9,8 +9,8 @@ class DbController:
     def find_one(self, db_name: str, collection_name: str, query: dict) -> dict:
         return self._db_service.find_one(db_name, collection_name, query)
 
-    def find_all(self, db_name: str, collection_name: str) -> dict:
-        return self._db_service.find_all(db_name, collection_name)
+    def find(self, db_name: str, collection_name: str, query: str) -> dict:
+        return self._db_service.find(db_name, collection_name, query)
 
     def insert_one(self, db_name: str, collection_name: str, record: dict) -> ObjectId:
         return self._db_service.insert_one(db_name, collection_name, record)
