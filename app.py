@@ -21,15 +21,11 @@ db_controller = get_db_controller()
 
 @app.route('/api/v1/chapters', methods=["GET"])
 def get_chapters():
-    db_name = DB_NAME
-    collection_name = CHAPTERS_COLLECTION_NAME
-    db_controller.find_many(db_name, collection_name, " ")
+    db_controller.find_many(DB_NAME, CHAPTERS_COLLECTION_NAME, {})
     return
 
 
-@app.route('/api/v1/chapter', methods=["GET"])
-def get_chapter(name):
-    db_name = DB_NAME
-    collection_name = name
-    db_controller.find_one(db_name, collection_name, " ")
+@app.route('/api/v1/chapter/<chapter_id>', methods=["GET"])
+def get_chapter(chapter_id):
+    db_controller.find_one(DB_NAME, CHAPTERS_COLLECTION_NAME, {"chapter": chapter_id})
     return
