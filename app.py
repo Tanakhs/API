@@ -75,7 +75,7 @@ def signup():
 def login():
     login_details = request.get_json()  # store the json body request
     user_from_db = _db_controller.find_one(DB_NAME, USERS_COLLECTION,
-                                          {"username": login_details["username"]})  # search for user in database
+                                           {"username": login_details["username"]})  # search for user in database
 
     if user_from_db:
         encrypted_password = hashlib.sha256(login_details['password'].encode("utf-8")).hexdigest()
