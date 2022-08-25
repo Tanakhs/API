@@ -1,4 +1,4 @@
-name: ci-python-unittest
+name: api-ci
 
 on:
   pull_request:
