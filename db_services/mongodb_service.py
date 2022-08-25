@@ -32,8 +32,8 @@ class MongodbService(IDbService):
         if self.is_db_exist(db_name):
             if self.is_collection_exist(db_name, collection_name):
                 return self._client[db_name][collection_name]
-            raise Exception(f"collection: {collection_name} does not exist under database: {db_name}")
-        raise Exception(f"database: {db_name} does not exist under client: {self._client}")
+            raise KeyError(f"collection: {collection_name} does not exist under database: {db_name}")
+        raise KeyError(f"database: {db_name} does not exist under client: {self._client}")
 
     def is_db_exist(self, db_name: str) -> bool:
         db_list = self._client.list_database_names()
