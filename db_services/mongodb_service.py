@@ -1,10 +1,11 @@
 from db_services.db_service_interface import IDbService
 from bson.objectid import ObjectId
+from pymongo import MongoClient
 
 
 class MongodbService(IDbService):
 
-    def __init__(self, client):
+    def __init__(self, client: MongoClient):
         self._client = client
 
     def find_one(self, db_name: str, collection_name: str, query: dict) -> dict:
