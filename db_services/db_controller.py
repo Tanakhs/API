@@ -1,4 +1,4 @@
-from db_service_interface import IDbService
+from db_services.db_service_interface import IDbService
 from bson.objectid import ObjectId
 
 
