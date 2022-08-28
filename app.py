@@ -7,6 +7,7 @@ from flask_jwt_extended import JWTManager, create_access_token, jwt_required, ge
 from pymongo import MongoClient
 from db_services.mongodb_service import MongodbService
 from db_services.db_controller import DbController
+from bson.objectid import ObjectId
 
 app = Flask(__name__)
 jwt = JWTManager(app)
@@ -16,7 +17,7 @@ with open('.jwt_secret_key') as f:
 app.config['JWT_SECRET_KEY'] = str(lines)
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = datetime.timedelta(days=1)
 
-DB_NAME = "SecularReview"
+DB_NAME = "secular_review"
 CHAPTERS_COLLECTION_NAME = "chapters"
 USERS_COLLECTION = "users"
 
@@ -65,7 +66,7 @@ def signup():
     new_user["password"] = hashlib.sha256(new_user["password"].encode("utf-8")).hexdigest()  # encrypt password
     doc = _db_controller.find_one(DB_NAME, USERS_COLLECTION, {"username": new_user["username"]})  # check if user exist
     if not doc:
-        _db_controller.insert_one("SecularReview", "users", new_user)
+        _db_controller.insert_one(DB_NAME, USERS_COLLECTION, new_user)
         return jsonify({'msg': 'User created successfully'}), 201
     else:
         return jsonify({'msg': 'Username already exists'}), 409
@@ -88,18 +89,30 @@ def login():
 
 @app.route('/api/v1/chapters', methods=["GET"])
 def get_chapters():
-    _db_controller.find(DB_NAME, CHAPTERS_COLLECTION_NAME, {})
-    return
+    records = []
+    result = _db_controller.find(DB_NAME, CHAPTERS_COLLECTION_NAME, {})
+    for record in result:
+        record["_id"] = str(record["_id"])
+        records.append(record)
+    return jsonify(records)
 
 
 @app.route('/api/v1/chapter/<string:chapter_id>', methods=["GET"])
 def get_chapter(chapter_id):
-    _db_controller.find_one(DB_NAME, CHAPTERS_COLLECTION_NAME, {"_id": chapter_id})
-    return
+    result = _db_controller.find_one(DB_NAME, CHAPTERS_COLLECTION_NAME, {"_id": ObjectId(chapter_id)})
+    result["_id"] = str(result["_id"])
+    return jsonify(result)
+
+
+@app.route('/api/v1/chapter', methods=["POST"])
+@admin_required
+def post_chapter(current_user):
+    new_chapter = request.get_json()
+    return jsonify(str(_db_controller.insert_one(DB_NAME, CHAPTERS_COLLECTION_NAME, new_chapter)))
 
 
 @app.route("/api/v1/user", methods=["GET"])
-@admin_required
+@token_required
 def profile(current_user):
     return jsonify(current_user)
 
