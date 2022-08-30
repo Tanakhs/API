@@ -130,3 +130,4 @@ dmypy.json
 
 # Secrets
 .jwt_secret_key
+tests/test_data/.jwt_secret_key_test
