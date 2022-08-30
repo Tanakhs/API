@@ -1,7 +1,6 @@
 import hashlib
 import datetime
 from functools import wraps
-
 from flask import Flask, request, jsonify
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from pymongo import MongoClient
@@ -12,14 +11,16 @@ from bson.objectid import ObjectId
 app = Flask(__name__)
 jwt = JWTManager(app)
 
-with open('.jwt_secret_key') as f:
-    lines = f.readlines()
-app.config['JWT_SECRET_KEY'] = str(lines)
-app.config['JWT_ACCESS_TOKEN_EXPIRES'] = datetime.timedelta(days=1)
-
 DB_NAME = 'secular_review'
 CHAPTERS_COLLECTION_NAME = 'chapters'
 USERS_COLLECTION = 'users'
+
+
+def config():
+    with open('.jwt_secret_key') as f:
+        lines = f.readlines()
+    app.config['JWT_SECRET_KEY'] = str(lines)
+    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = datetime.timedelta(days=1)
 
 
 def get_db_controller():
@@ -103,16 +104,16 @@ def get_chapter(chapter_id):
     if result:
         result['_id'] = str(result['_id'])
         return jsonify(result), 200
-    return jsonify({'msg': f'Chapter with chapter_id {chapter_id} not found'}), 404
+    return jsonify({'msg': f'Chapter with chapter_id {chapter_id} not found', '_id': chapter_id}), 404
 
 
 @app.route('/api/v1/chapter/<string:chapter_id>', methods=['PUT'])
 @admin_required
 def update_chapter(current_user, chapter_id):
     result = _db_controller.update_one(DB_NAME, CHAPTERS_COLLECTION_NAME, {'_id': ObjectId(chapter_id)},
-                              {"$set": request.get_json()})
+                                       {"$set": request.get_json()})
     if result.matched_count == 0:
-        return jsonify({'msg': f'Chapter with chapter_id {chapter_id} not found'}), 404
+        return jsonify({'msg': f'Chapter with chapter_id {chapter_id} not found', '_id': chapter_id}), 404
     return jsonify({'msg': 'Chapter updated successfully'}), 202
 
 
@@ -120,7 +121,10 @@ def update_chapter(current_user, chapter_id):
 @admin_required
 def post_chapter(current_user):
     new_chapter = request.get_json()
-    return jsonify(str(_db_controller.insert_one(DB_NAME, CHAPTERS_COLLECTION_NAME, new_chapter)))
+    result = _db_controller.insert_one(DB_NAME, CHAPTERS_COLLECTION_NAME, new_chapter)
+    if result:
+        return jsonify({'msg': 'Chapter created successfully', '_id': str(result)}), 201
+    return jsonify({'msg': 'Chapter could not be created'}), 500
 
 
 @app.route('/api/v1/user', methods=['GET'])
@@ -130,4 +134,5 @@ def profile(current_user):
 
 
 if __name__ == '__main__':
+    config()
     app.run(debug=True)
