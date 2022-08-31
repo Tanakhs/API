@@ -1,10 +1,10 @@
 import json
+import os
 import unittest
 from flask_jwt_extended import create_access_token
 from app import app
 from unittest import mock
 from bson.objectid import ObjectId
-from pathlib import Path
 from tests.test_data.chapters_data import mock_chapters_data, mock_chapter_data
 
 
@@ -24,12 +24,8 @@ def mock_request_info():
 
 class AppTests(unittest.TestCase):
     def setUp(self):
-        base_path = Path(__file__).parent
-        file_path = (base_path / "test_data/.jwt_secret_key_test").resolve()
+        app.config['JWT_SECRET_KEY'] = os.environ["JWT_SECRET_KEY_TEST"]
         self._client = app.test_client()
-        with open(file_path) as f:
-            lines = f.readlines()
-        app.config['JWT_SECRET_KEY'] = str(lines)
 
     @mock.patch('app._db_controller')
     def test_getChapters_success(self, mock_db_controller):
