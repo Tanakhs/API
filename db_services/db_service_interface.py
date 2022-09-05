@@ -16,7 +16,7 @@ class IDbService:
 
     @abstractmethod
     def update_one(self, db_name: str, collection_name: str, query: dict,
-                   record: dict) -> UpdateResult: raise NotImplementedError
+                   record: dict, array_filters: dict = {}) -> UpdateResult: raise NotImplementedError
 
     @abstractmethod
     def delete_one(self, db_name: str, collection_name: str, query: dict) -> DeleteResult: raise NotImplementedError

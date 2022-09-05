@@ -24,7 +24,7 @@ def mock_request_info():
 
 class AppTests(unittest.TestCase):
     def setUp(self):
-        app.config['JWT_SECRET_KEY'] = os.environ["JWT_SECRET_KEY_TEST"]
+        app.config['JWT_SECRET_KEY'] = os.environ['JWT_SECRET_KEY_TEST']
         self._client = app.test_client()
 
     @mock.patch('app._db_controller')

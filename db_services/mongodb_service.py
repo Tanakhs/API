@@ -21,9 +21,10 @@ class MongodbService(IDbService):
         collection = self.get_collection(db_name, collection_name)
         return collection.insert_one(record).inserted_id
 
-    def update_one(self, db_name: str, collection_name: str, query: dict, record: dict) -> UpdateResult:
+    def update_one(self, db_name: str, collection_name: str, query: dict, record: dict,
+                   array_filters: dict = {}) -> UpdateResult:
         collection = self.get_collection(db_name, collection_name)
-        return collection.update_one(query, record)
+        return collection.update_one(query, record, array_filters=array_filters)
 
     def delete_one(self, db_name: str, collection_name: str, query: dict) -> DeleteResult:
         collection = self.get_collection(db_name, collection_name)
