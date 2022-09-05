@@ -64,6 +64,7 @@ def admin_required(f):
 def signup():
     new_user = request.get_json()  # store the json body request
     new_user['password'] = hashlib.sha256(new_user['password'].encode('utf-8')).hexdigest()  # encrypt password
+    new_user['role'] = 'default'
     doc = _db_controller.find_one(DB_NAME, USERS_COLLECTION, {'username': new_user['username']})  # check if user exist
     if not doc:
         _db_controller.insert_one(DB_NAME, USERS_COLLECTION, new_user)
