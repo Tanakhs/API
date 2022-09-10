@@ -141,7 +141,7 @@ def post_comment(current_user, chapter_id, comment_id):
     #                                        array_filters=[{'current._id': ObjectId(comment_id)}])
     # else:
     result = _db_controller.update_one(DB_NAME, CHAPTERS_COLLECTION_NAME, {'_id': ObjectId(chapter_id)},
-                                           {'$push': {'comments': new_comment}})
+                                       {'$push': {'comments': new_comment}})
     if result.matched_count == 0:
         return jsonify({'msg': f'Chapter with chapter_id {chapter_id} not found', '_id': chapter_id}), 404
     return jsonify({'msg': 'Post created successfully'}), 202
