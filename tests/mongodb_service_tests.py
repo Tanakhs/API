@@ -2,6 +2,7 @@ import unittest
 from bson.objectid import ObjectId
 from unittest.mock import MagicMock
 from db_services.mongodb_service import MongodbService
+from pymongo.results import UpdateResult, DeleteResult
 
 DB_EXIST_NAME = "db_exist"
 DB_NOT_EXIST_NAME = "db_does_not_exist"
@@ -92,14 +93,28 @@ class MongoDbServiceTests(unittest.TestCase):
     def test_update_one_success(self):
         record = {"key1": "some_id_1",
                   "key2": "some_id_2"}
-        result = self.db_service.update_one(DB_EXIST_NAME, COLLECTION_NAME_EXIST, record)
-        self.assertNotIsInstance(result, ObjectId)
+        update_one_result = self.collection_mock.update_one.return_value
+        update_one_result.matched_count = 1
+        result = self.db_service.update_one(DB_EXIST_NAME, COLLECTION_NAME_EXIST, {}, {})
+        self.assertEqual(result.matched_count, 1)
 
-    # def test_update_one_failure(self):
-    #
-    # def test_delete_one_success(self):
-    #
-    # def test_delete_one_failure(self):  # use cases: db/collection/record not found
+    def test_update_one_failure(self):
+        update_one_result = self.collection_mock.update_one.return_value
+        update_one_result.matched_count = 0
+        result = self.db_service.update_one(DB_EXIST_NAME, COLLECTION_NAME_EXIST, {}, {})
+        self.assertEqual(result.matched_count, 0)
+
+    def test_delete_one_success(self):
+        delete_one_result = self.collection_mock.delete_one.return_value
+        delete_one_result.deleted_count = 1
+        result = self.db_service.delete_one(DB_EXIST_NAME, COLLECTION_NAME_EXIST, {})
+        self.assertEqual(result.deleted_count, 1)
+
+    def test_delete_one_failure(self):  # use cases: db/collection/record not found
+        delete_one_result = self.collection_mock.delete_one.return_value
+        delete_one_result.deleted_count = 0
+        result = self.db_service.delete_one(DB_EXIST_NAME, COLLECTION_NAME_EXIST, {})
+        self.assertEqual(result.deleted_count, 0)
 
     def mock_behaviour(self):
         """db&collection_exist hold their relative names"""
