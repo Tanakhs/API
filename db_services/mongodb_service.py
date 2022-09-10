@@ -28,7 +28,7 @@ class MongodbService(IDbService):
 
     def delete_one(self, db_name: str, collection_name: str, query: dict) -> DeleteResult:
         collection = self.get_collection(db_name, collection_name)
-        collection.delete_one(query)
+        return collection.delete_one(query)
 
     def get_collection(self, db_name: str, collection_name: str):
         if self.is_db_exist(db_name):
