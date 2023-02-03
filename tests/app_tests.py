@@ -4,20 +4,25 @@ import unittest
 from flask_jwt_extended import create_access_token
 from app import app
 from unittest import mock
-from bson.objectid import ObjectId
-from tests.test_data.chapters_data import mock_chapters_data, mock_chapter_data
+from tests.test_data.mock_data import *
 
 
-def mock_request_info():
+def mock_request_info(mock_data_func):
     access_token = create_access_token('test')
     headers = {
         'Authorization': 'Bearer {}'.format(access_token)
     }
-    data = {
-        'key1': 'val1',
-        'key2': 'val2'
+    data = mock_data_func()
+    user = {
+        'user_name': 'test',
+        'password': 'testpassword',
+        'role': 'admin',
+        'profile_picture_url': 'https://www.shutterstock.com/image-vector/man-icon-vector-260nw-1040084344.jpg',
+        'email_address': 'test@gmail.com',
+        'age': 25,
+        'gender': 'other',
+        'religion': 'atheist',
     }
-    user = {'username': 'test', 'role': 'admin'}
 
     return headers, data, user
 
@@ -50,7 +55,7 @@ class AppTests(unittest.TestCase):
     @mock.patch('app._db_controller')
     def test_updateChapter_success(self, mock_db_controller):
         with app.app_context():
-            headers, data, user = mock_request_info()
+            headers, data, user = mock_request_info(mock_chapter_data)
             mock_db_controller.find_one.return_value = user
             update_one_result = mock_db_controller.update_one.return_value
             update_one_result.matched_count = 1
@@ -62,7 +67,7 @@ class AppTests(unittest.TestCase):
     @mock.patch('app._db_controller')
     def test_updateChapter_failure(self, mock_db_controller):
         with app.app_context():
-            headers, data, user = mock_request_info()
+            headers, data, user = mock_request_info(mock_chapter_data)
             mock_db_controller.find_one.return_value = user
             update_one_result = mock_db_controller.update_one.return_value
             update_one_result.matched_count = 0
@@ -74,7 +79,7 @@ class AppTests(unittest.TestCase):
     @mock.patch('app._db_controller')
     def test_postChapter_success(self, mock_db_controller):
         with app.app_context():
-            headers, data, user = mock_request_info()
+            headers, data, user = mock_request_info(mock_chapter_data)
             mock_db_controller.find_one.return_value = user
             insert_one_result = mock_db_controller.insert_one.return_value
             insert_one_result.return_value = ObjectId()
@@ -86,7 +91,7 @@ class AppTests(unittest.TestCase):
     @mock.patch('app._db_controller')
     def test_postChapter_failure(self, mock_db_controller):
         with app.app_context():
-            headers, data, user = mock_request_info()
+            headers, data, user = mock_request_info(mock_chapter_data)
             mock_db_controller.find_one.return_value = user
             mock_db_controller.insert_one.return_value = None
             result = self._client.post(f'/api/v1/chapter', headers=headers, data=json.dumps(data),
@@ -97,7 +102,8 @@ class AppTests(unittest.TestCase):
     @mock.patch('app._db_controller')
     def test_postComment_success(self, mock_db_controller):
         with app.app_context():
-            headers, data, user = mock_request_info()
+            headers, data, user = mock_request_info(mock_comment_data)
+            mock_db_controller.find_one.return_value = user
             update_one_result = mock_db_controller.update_one.return_value
             update_one_result.matched_count = 1
             result = self._client.post(f'/api/v1/comment/62fbacd709932fd2b4d682a4', headers=headers,
@@ -109,7 +115,7 @@ class AppTests(unittest.TestCase):
     @mock.patch('app._db_controller')
     def test_postComment_failure(self, mock_db_controller):
         with app.app_context():
-            headers, data, user = mock_request_info()
+            headers, data, user = mock_request_info(mock_comment_data)
             mock_db_controller.find_one.return_value = user
             update_one_result = mock_db_controller.update_one.return_value
             update_one_result.matched_count = 0
@@ -118,31 +124,6 @@ class AppTests(unittest.TestCase):
                                        content_type='application/json',
                                        )
         self.assertEqual(404, result.status_code)
-
-    # @mock.patch('app._db_controller')
-    # def test_postNestedComment_success(self, mock_db_controller):
-    #     with app.app_context():
-    #         headers, data, user = mock_request_info()
-    #         update_one_result = mock_db_controller.update_one.return_value
-    #         update_one_result.matched_count = 1
-    #         result = self._client.post(f'/api/v1/comment/62fbacd709932fd2b4d682a4', headers=headers,
-    #                                    data=json.dumps(data),
-    #                                    content_type='application/json',
-    #                                    )
-    #     self.assertEqual(202, result.status_code)
-    #
-    # @mock.patch('app._db_controller')
-    # def test_postNestedComment_failure(self, mock_db_controller):
-    #     with app.app_context():
-    #         headers, data, user = mock_request_info()
-    #         mock_db_controller.find_one.return_value = user
-    #         update_one_result = mock_db_controller.update_one.return_value
-    #         update_one_result.matched_count = 0
-    #         result = self._client.post(f'/api/v1/comment/62fbacd709932fd2b4d682a4', headers=headers,
-    #                                    data=json.dumps(data),
-    #                                    content_type='application/json',
-    #                                    )
-    #     self.assertEqual(404, result.status_code)
 
 
 if __name__ == '__main__':

@@ -22,7 +22,7 @@ class MongodbService(IDbService):
         return collection.insert_one(record).inserted_id
 
     def update_one(self, db_name: str, collection_name: str, query: dict, record: dict,
-                   array_filters: dict = {}) -> UpdateResult:
+                   array_filters: list = []) -> UpdateResult:
         collection = self.get_collection(db_name, collection_name)
         return collection.update_one(query, record, array_filters=array_filters)
 
