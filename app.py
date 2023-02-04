@@ -196,6 +196,20 @@ def update_comment(current_user, chapter_id, comment_id):
     return jsonify({'msg': 'Comment updated successfully'}), 202
 
 
+@app.route('/api/v1/comment/<string:chapter_id>/<string:comment_id>', methods=['DELETE'])
+@token_required
+def delete_comment(current_user, chapter_id, comment_id):
+    query = {"_id": ObjectId(chapter_id), "comments._id": ObjectId(comment_id),
+             "comments.user_name": current_user.user_name}
+    update = {"$pull": {"comments": {"_id": ObjectId(comment_id), "user_name": current_user.user_name}}}
+    result = _db_controller.update_one(DB_NAME, CHAPTERS_COLLECTION_NAME, query, update)
+    if result.modified_count == 0:
+        return jsonify(
+            {
+                'msg': f'deleting comment with comment_id {comment_id} and user name {current_user.user_name} under chapter with chapter_id {chapter_id} failed'}), 404
+    return jsonify({'msg': 'Comment deleted successfully'}), 202
+
+
 @app.route('/api/v1/user', methods=['GET'])
 @token_required
 def profile(current_user):
