@@ -154,6 +154,27 @@ def post_comment(current_user, chapter_id):
     return jsonify({'msg': 'Post created successfully'}), 202
 
 
+@app.route('/api/v1/comment/<string:chapter_id>/<string:comment_id>', methods=['PUT'])
+@token_required
+def update_comment(current_user, chapter_id, comment_id):
+    new_comment = request.get_json()
+    new_comment['user_name'] = current_user.user_name
+    new_comment['profile_picture_url'] = current_user.profile_picture_url
+    comment = Comment(**new_comment)
+    result = _db_controller.update_one(DB_NAME, CHAPTERS_COLLECTION_NAME,
+                                       {"_id": ObjectId(chapter_id), "comments._id": ObjectId(comment_id)},
+                                       {"$set": {
+                                           "comments.$": {**{k: v for k, v in comment.to_bson().items() if k != "_id"},
+                                                          "_id": ObjectId(comment_id)}
+                                       }})
+
+    if result.matched_count == 0:
+        return jsonify(
+            {'msg': f'Either chapter with chapter_id {chapter_id} or comment with comment_id {comment_id} not found',
+             '_id': chapter_id}), 404
+    return jsonify({'msg': 'Comment updated successfully'}), 202
+
+
 @app.route('/api/v1/user', methods=['GET'])
 @token_required
 def profile(current_user):

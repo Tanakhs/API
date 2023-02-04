@@ -125,6 +125,34 @@ class AppTests(unittest.TestCase):
                                        )
         self.assertEqual(404, result.status_code)
 
+    @mock.patch('app._db_controller')
+    def test_putComment_success(self, mock_db_controller):
+        with app.app_context():
+            headers, data, user = mock_request_info(mock_comment_data)
+            mock_db_controller.find_one.return_value = user
+            update_one_result = mock_db_controller.update_one.return_value
+            update_one_result.matched_count = 1
+            result = self._client.put(f'/api/v1/comment/63dc389d0bb56cd596d575b9/63dd44a355621619543757c0',
+                                      headers=headers,
+                                      data=json.dumps(data),
+                                      content_type='application/json',
+                                      )
+        self.assertEqual(202, result.status_code)
+
+    @mock.patch('app._db_controller')
+    def test_putComment_failure(self, mock_db_controller):
+        with app.app_context():
+            headers, data, user = mock_request_info(mock_comment_data)
+            mock_db_controller.find_one.return_value = user
+            update_one_result = mock_db_controller.update_one.return_value
+            update_one_result.matched_count = 0
+            result = self._client.put(f'/api/v1/comment/63dc389d0bb56cd596d575b9/63dd44a355621619543757c0',
+                                      headers=headers,
+                                      data=json.dumps(data),
+                                      content_type='application/json',
+                                      )
+        self.assertEqual(404, result.status_code)
+
 
 if __name__ == '__main__':
     unittest.main()
