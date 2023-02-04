@@ -59,7 +59,7 @@ def mock_comment_data():
         "_id": "63dd81295f249633483d6e21",
         "user_name": "test",
         "profile_picture_url": "https://www.shutterstock.com/image-vector/man-icon-vector-260nw-1040084344.jpg",
-        "content": "i am the best",
+        "content": "updated2",
         "date_added": "2023-02-03T18:50:54.242+00:00",
         "date_updated": "2023-02-03T18:50:54.242+00:00"
     }

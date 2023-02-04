@@ -63,7 +63,7 @@ def admin_required(f):
             user_model = User(**user_from_db)
             return f(user_model, *args, **kwargs)
         else:
-            return jsonify({'msg': 'Admin permissions required'}), 401
+            return jsonify({'msg': 'Admin permissions required'}), 403
 
     return inner
 
@@ -157,21 +157,42 @@ def post_comment(current_user, chapter_id):
 @app.route('/api/v1/comment/<string:chapter_id>/<string:comment_id>', methods=['PUT'])
 @token_required
 def update_comment(current_user, chapter_id, comment_id):
+    chapter = _db_controller.find_one(DB_NAME, CHAPTERS_COLLECTION_NAME, {"_id": ObjectId(chapter_id)})
+    if not chapter:
+        return jsonify(
+            {'msg': f'chapter with chapter_id {chapter_id} was not found',
+             '_id': chapter_id}), 404
+
+    # Find the comment in the chapter document
+    comments = chapter.get("comments")
+    comment_to_update = None
+    for c in comments:
+        if ObjectId(c["_id"]) == ObjectId(comment_id) and c["user_name"] == current_user.user_name:
+            comment_to_update = c
+            break
+
+    # Check if the comment was found
+    if not comment_to_update:
+        return jsonify(
+            {'msg': f'comment with comment_id {comment_id} or with username {current_user.user_name} was not found',
+             '_id': chapter_id}), 404
+
     new_comment = request.get_json()
     new_comment['user_name'] = current_user.user_name
     new_comment['profile_picture_url'] = current_user.profile_picture_url
-    comment = Comment(**new_comment)
-    result = _db_controller.update_one(DB_NAME, CHAPTERS_COLLECTION_NAME,
-                                       {"_id": ObjectId(chapter_id), "comments._id": ObjectId(comment_id)},
-                                       {"$set": {
-                                           "comments.$": {**{k: v for k, v in comment.to_bson().items() if k != "_id"},
-                                                          "_id": ObjectId(comment_id)}
-                                       }})
+    new_comment = Comment(**new_comment)
+    comment_to_update.update(new_comment.to_bson())
+    # Replace the updated comment in the comments list
+    comment_index = comments.index(comment_to_update)
+    comments[comment_index] = comment_to_update
 
-    if result.matched_count == 0:
+    result = _db_controller.update_one(DB_NAME, CHAPTERS_COLLECTION_NAME, {"_id": ObjectId(chapter_id)},
+                                       {"$set": {"comments": comments}})
+
+    if result.modified_count == 0:
         return jsonify(
-            {'msg': f'Either chapter with chapter_id {chapter_id} or comment with comment_id {comment_id} not found',
-             '_id': chapter_id}), 404
+            {
+                'msg': f'Update comment with comment_id {comment_id} and user name {current_user.user_name} failed'}), 404
     return jsonify({'msg': 'Comment updated successfully'}), 202
 
 
