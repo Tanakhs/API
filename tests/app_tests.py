@@ -129,29 +129,71 @@ class AppTests(unittest.TestCase):
     def test_putComment_success(self, mock_db_controller):
         with app.app_context():
             headers, data, user = mock_request_info(mock_comment_data)
+            data['_id'] = None
             mock_db_controller.find_one.return_value = user
+            mock_db_controller.find_one.side_effect = [user, mock_chapter_data()]
+
             update_one_result = mock_db_controller.update_one.return_value
             update_one_result.matched_count = 1
-            result = self._client.put(f'/api/v1/comment/63dc389d0bb56cd596d575b9/63dd44a355621619543757c0',
+            result = self._client.put(f'/api/v1/comment/63dc389d0bb56cd596d575b9/63dbfcf7e8b3b669de1065b9',
                                       headers=headers,
                                       data=json.dumps(data),
                                       content_type='application/json',
                                       )
         self.assertEqual(202, result.status_code)
+        self.assertTrue('Comment updated successfully' in result.text)
 
     @mock.patch('app._db_controller')
-    def test_putComment_failure(self, mock_db_controller):
+    def test_putComment_generalFailure(self, mock_db_controller):
         with app.app_context():
             headers, data, user = mock_request_info(mock_comment_data)
             mock_db_controller.find_one.return_value = user
+            mock_db_controller.find_one.side_effect = [user, mock_chapter_data()]
             update_one_result = mock_db_controller.update_one.return_value
-            update_one_result.matched_count = 0
-            result = self._client.put(f'/api/v1/comment/63dc389d0bb56cd596d575b9/63dd44a355621619543757c0',
+            update_one_result.modified_count = 0
+            result = self._client.put(f'/api/v1/comment/63dc389d0bb56cd596d575b9/63dbfcf7e8b3b669de1065b9',
                                       headers=headers,
                                       data=json.dumps(data),
                                       content_type='application/json',
                                       )
         self.assertEqual(404, result.status_code)
+        self.assertTrue(
+            f'Update comment with comment_id 63dbfcf7e8b3b669de1065b9 and user name {user["user_name"]} failed' in result.text)
+
+    @mock.patch('app._db_controller')
+    def test_putComment_wrongUser_failure(self, mock_db_controller):
+        with app.app_context():
+            headers, data, user = mock_request_info(mock_comment_data)
+            user['user_name'] = 'wrong_test'
+            mock_db_controller.find_one.return_value = user
+            mock_db_controller.find_one.side_effect = [user, mock_chapter_data()]
+            update_one_result = mock_db_controller.update_one.return_value
+            update_one_result.modified_count = 0
+            result = self._client.put(f'/api/v1/comment/63dc389d0bb56cd596d575b9/63dbfcf7e8b3b669de1065b9',
+                                      headers=headers,
+                                      data=json.dumps(data),
+                                      content_type='application/json',
+                                      )
+        self.assertEqual(404, result.status_code)
+        self.assertTrue(
+            f'comment with comment_id 63dbfcf7e8b3b669de1065b9 or with username {user["user_name"]} was not found' in result.text)
+
+    @mock.patch('app._db_controller')
+    def test_putComment_noCommentIdFound_failure(self, mock_db_controller):
+        with app.app_context():
+            headers, data, user = mock_request_info(mock_comment_data)
+            mock_db_controller.find_one.return_value = user
+            mock_db_controller.find_one.side_effect = [user, mock_chapter_data()]
+            update_one_result = mock_db_controller.update_one.return_value
+            update_one_result.modified_count = 0
+            result = self._client.put(f'/api/v1/comment/63dc389d0bb56cd596d575b9/63dd81295f249633483d6e21',
+                                      headers=headers,
+                                      data=json.dumps(data),
+                                      content_type='application/json',
+                                      )
+        self.assertEqual(404, result.status_code)
+        self.assertTrue(
+            f'comment with comment_id 63dd81295f249633483d6e21 or with username {user["user_name"]} was not found' in result.text)
 
 
 if __name__ == '__main__':
