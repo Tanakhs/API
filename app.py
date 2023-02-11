@@ -14,8 +14,14 @@ from models.chapter_update import ChapterUpdate
 from models.comment import Comment
 from models.objectid import PydanticObjectId
 from models.user import User, verify_password, Role
+from flask_cors import CORS
+from flask_caching import Cache
 
 app = Flask(__name__)
+# app.config.from_object(Config)  # Set the configuration variables to the flask application
+cache = Cache(app, config={'CACHE_TYPE': 'redis', 'CACHE_REDIS_URL': 'redis://localhost:6379/0'})
+
+CORS(app)
 jwt = JWTManager(app)
 
 DB_NAME = 'secular_review'
@@ -98,6 +104,7 @@ def login():
 
 
 @app.route('/api/v1/chapters', methods=['GET'])
+@cache.cached(timeout=30, query_string=True)
 def get_chapters():
     records = []
     result = _db_controller.find(DB_NAME, CHAPTERS_COLLECTION_NAME, {})
@@ -108,6 +115,7 @@ def get_chapters():
 
 
 @app.route('/api/v1/chapter/<string:chapter_id>', methods=['GET'])
+@cache.cached(timeout=30, query_string=True)
 def get_chapter(chapter_id):
     result = _db_controller.find_one(DB_NAME, CHAPTERS_COLLECTION_NAME, {'_id': ObjectId(chapter_id)})
     if result:
