@@ -16,10 +16,10 @@ from models.objectid import PydanticObjectId
 from models.user import User, verify_password, Role
 from flask_cors import CORS
 from flask_caching import Cache
-
+import os
 app = Flask(__name__)
-# app.config.from_object(Config)  # Set the configuration variables to the flask application
-cache = Cache(app, config={'CACHE_TYPE': 'redis', 'CACHE_REDIS_URL': 'redis://localhost:6379/0'})
+app.config.from_object('config.Config')  # Set the configuration variables to the flask application
+cache = Cache(app)
 
 CORS(app)
 jwt = JWTManager(app)
@@ -226,4 +226,4 @@ def profile(current_user):
 
 if __name__ == '__main__':
     config()
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0')

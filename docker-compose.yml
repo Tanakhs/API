@@ -1,0 +1,19 @@
+version: '3'
+services:
+#  api:
+#    container_name: flask-container
+#    build: .
+#    entrypoint: python app.py
+#    env_file:
+#      - .env
+#    ports:
+#      - '5000:5000'
+#    environment:
+#      JWT_SECRET_KEY: ./.jwt_secret_key
+#    depends_on:
+#      - redis
+  redis:
+    image: redis
+    container_name: redis-container
+    ports:
+      - "6379:6379"
