@@ -1,8 +1,8 @@
 import unittest
 from bson.objectid import ObjectId
 from unittest.mock import MagicMock
+
 from db_services.mongodb_service import MongodbService
-from pymongo.results import UpdateResult, DeleteResult
 
 DB_EXIST_NAME = "db_exist"
 DB_NOT_EXIST_NAME = "db_does_not_exist"

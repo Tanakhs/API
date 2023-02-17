@@ -2,9 +2,10 @@ import json
 import os
 import unittest
 from flask_jwt_extended import create_access_token
-from app import app
 from unittest import mock
+
 from tests.test_data.mock_data import *
+from app import app
 
 
 def mock_request_info(mock_data_func):

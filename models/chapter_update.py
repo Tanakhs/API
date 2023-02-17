@@ -2,9 +2,9 @@ from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel, Field
 from typing import List, Optional
 from datetime import datetime
+from enum import Enum
 
 from .objectid import PydanticObjectId
-from enum import Enum
 
 
 class HollyBook(Enum):

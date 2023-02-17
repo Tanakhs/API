@@ -1,7 +1,8 @@
-from db_services.db_service_interface import IDbService
 from bson.objectid import ObjectId
 from pymongo import MongoClient
 from pymongo.results import UpdateResult, DeleteResult
+
+from db_services.db_service_interface import IDbService
 
 
 class MongodbService(IDbService):
@@ -15,14 +16,16 @@ class MongodbService(IDbService):
 
     def find(self, db_name: str, collection_name: str, query: dict) -> dict:
         collection = self.get_collection(db_name, collection_name)
-        return collection.find(query)
+        return collection.find(query).__dict__
 
     def insert_one(self, db_name: str, collection_name: str, record: dict) -> ObjectId:
         collection = self.get_collection(db_name, collection_name)
         return collection.insert_one(record).inserted_id
 
     def update_one(self, db_name: str, collection_name: str, query: dict, record: dict,
-                   array_filters: list = []) -> UpdateResult:
+                   array_filters=None) -> UpdateResult:
+        if array_filters is None:
+            array_filters = []
         collection = self.get_collection(db_name, collection_name)
         return collection.update_one(query, record, array_filters=array_filters)
 
@@ -46,6 +49,4 @@ class MongodbService(IDbService):
     def is_collection_exist(self, db_name: str, collection_name: str) -> bool:
         db = self._client[db_name]
         collection_list = db.list_collection_names()
-        if collection_name in collection_list:
-            return True
-        return False
+        return collection_name in collection_list
