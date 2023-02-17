@@ -1,6 +1,7 @@
-from db_services.db_service_interface import IDbService
 from pymongo.results import UpdateResult, DeleteResult
 from bson.objectid import ObjectId
+
+from db_services.db_service_interface import IDbService
 
 
 class DbController:

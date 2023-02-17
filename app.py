@@ -3,10 +3,10 @@ from functools import wraps
 from flask import Flask, request, jsonify
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from pymongo import MongoClient
-from db_services.mongodb_service import MongodbService
-from db_services.db_controller import DbController
 from bson.objectid import ObjectId
 
+from db_services.mongodb_service import MongodbService
+from db_services.db_controller import DbController
 from models.chapter import Chapter
 from models.chapter_update import ChapterUpdate
 from models.comment import Comment
@@ -212,7 +212,8 @@ def delete_comment(current_user, chapter_id, comment_id):
     if result.modified_count == 0:
         return jsonify(
             {
-                'msg': f'deleting comment with comment_id {comment_id} and user name {current_user.user_name} under chapter with chapter_id {chapter_id} failed'}), 404
+                'msg': f'deleting comment with comment_id {comment_id} and user name '
+                       f'{current_user.user_name} under chapter with chapter_id {chapter_id} failed'}), 404
     return jsonify({'msg': 'Comment deleted successfully'}), 202
 
 

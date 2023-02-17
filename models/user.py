@@ -1,14 +1,13 @@
 import binascii
 import hashlib
 import os
-
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel, Field, SecretStr, validator
 from typing import Optional
 from datetime import datetime
+from enum import Enum
 
 from .objectid import PydanticObjectId
-from enum import Enum
 
 
 class Religion(Enum):
