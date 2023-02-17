@@ -1,7 +1,6 @@
 import binascii
 import hashlib
 import os
-from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel, Field, SecretStr, validator
 from typing import Optional
 from datetime import datetime
@@ -72,7 +71,7 @@ class User(BaseModel):
         return SecretStr(hash_password(pw))
 
     def to_json(self):
-        return jsonable_encoder(self, exclude_none=True)
+        return self.json()
 
     def to_bson(self):
         data = self.dict(by_alias=True, exclude_none=True)
