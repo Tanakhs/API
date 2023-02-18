@@ -1,3 +1,4 @@
+import json
 from pydantic import BaseModel, Field
 from typing import List, Optional
 from datetime import datetime
@@ -29,7 +30,7 @@ class Chapter(BaseModel):
     date_updated: Optional[datetime] = datetime.now()
 
     def to_json(self):
-        return self.json()
+        return json.loads(self.json())
 
     def to_bson(self):
         data = self.dict(by_alias=True, exclude_none=True)

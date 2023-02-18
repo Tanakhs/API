@@ -1,3 +1,4 @@
+import json
 from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
@@ -14,7 +15,7 @@ class Comment(BaseModel):
     date_updated: Optional[datetime] = datetime.now()
 
     def to_json(self):
-        return self.json()
+        return json.loads(self.json())
 
     def to_bson(self):
         data = self.dict(by_alias=True, exclude_none=True)

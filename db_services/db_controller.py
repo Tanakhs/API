@@ -11,7 +11,7 @@ class DbController:
     def find_one(self, db_name: str, collection_name: str, query: dict) -> dict:
         return self._db_service.find_one(db_name, collection_name, query)
 
-    def find(self, db_name: str, collection_name: str, query: dict) -> dict:
+    def find(self, db_name: str, collection_name: str, query: dict = dict()) -> dict:
         return self._db_service.find(db_name, collection_name, query)
 
     def insert_one(self, db_name: str, collection_name: str, record: dict) -> ObjectId:
