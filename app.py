@@ -1,6 +1,4 @@
-import hashlib
 import datetime
-import os
 from functools import wraps
 from flask import Flask, request, jsonify
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
@@ -17,6 +15,7 @@ from models.user import User, verify_password, Role
 from flask_cors import CORS
 from flask_caching import Cache
 import os
+
 app = Flask(__name__)
 app.config.from_object('config.Config')  # Set the configuration variables to the flask application
 cache = Cache(app)
@@ -115,7 +114,6 @@ def get_chapters():
 
 
 @app.route('/api/v1/chapter/<string:chapter_id>', methods=['GET'])
-@cache.cached(timeout=30, query_string=True)
 def get_chapter(chapter_id):
     result = _db_controller.find_one(DB_NAME, CHAPTERS_COLLECTION_NAME, {'_id': ObjectId(chapter_id)})
     if result:
@@ -159,7 +157,7 @@ def post_comment(current_user, chapter_id):
 
     if result.matched_count == 0:
         return jsonify({'msg': f'Chapter with chapter_id {chapter_id} not found', '_id': chapter_id}), 404
-    return jsonify({'msg': 'Post created successfully'}), 202
+    return jsonify({'msg': 'Post created successfully', '_id': str(comment.id)}), 202
 
 
 @app.route('/api/v1/comment/<string:chapter_id>/<string:comment_id>', methods=['PUT'])
