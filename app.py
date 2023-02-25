@@ -159,6 +159,7 @@ def update_comment(current_user, chapter_id, comment_id):
              '_id': chapter_id}), 404
 
     new_comment = request.get_json()
+    new_comment['_id'] = comment_to_update['_id']
     new_comment['user_name'] = current_user.user_name
     new_comment['profile_picture_url'] = current_user.profile_picture_url
 
