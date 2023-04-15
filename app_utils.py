@@ -17,7 +17,7 @@ class permission_required:
             from app import DB_CONTROLLER
 
             current_user = get_jwt_identity()
-            user_from_db = DB_CONTROLLER.find_one('secular_review', 'users', {'user_name': current_user})
+            user_from_db = DB_CONTROLLER.find_one('tanakhs', 'users', {'user_name': current_user})
 
             if not user_from_db:
                 abort(401)

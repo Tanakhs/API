@@ -20,7 +20,7 @@ CACHE = Cache(APP)
 CORS(APP)
 JWT = JWTManager(APP)
 
-DB_NAME = 'secular_review'
+DB_NAME = 'tanakhs'
 CHAPTERS_COLLECTION_NAME = 'chapters'
 USERS_COLLECTION = 'users'
 DB_CONTROLLER = get_db_controller()
