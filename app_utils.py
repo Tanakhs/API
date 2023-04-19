@@ -3,10 +3,11 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask import abort
 from inspect import getfullargspec
 
+from config import DB_NAME, USERS_COLLECTION
 from models.user import User, Role
 
 
-class permission_required:
+class PermissionRequired:
     def __init__(self, permission):
         self.permission = permission
 
@@ -16,8 +17,8 @@ class permission_required:
         def wrapped_function(*args, **kwargs):
             from app import DB_CONTROLLER
 
-            current_user = get_jwt_identity()
-            user_from_db = DB_CONTROLLER.find_one('tanakhs', 'users', {'user_name': current_user})
+            current_email = get_jwt_identity()
+            user_from_db = DB_CONTROLLER.find_one(DB_NAME, USERS_COLLECTION, {'email': current_email})
 
             if not user_from_db:
                 abort(401)

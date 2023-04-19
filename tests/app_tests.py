@@ -1,6 +1,8 @@
 import json
 import os
 import unittest
+
+from bson import ObjectId
 from flask_jwt_extended import create_access_token
 from unittest import mock
 
@@ -15,11 +17,12 @@ def mock_request_info(mock_data_func):
     }
     data = mock_data_func()
     user = {
-        'user_name': 'test',
-        'password': 'testpassword',
+        'name': 'test user',
+        'given_name': 'test',
+        'family_name': 'user',
         'role': 'admin',
-        'profile_picture_url': 'https://www.shutterstock.com/image-vector/man-icon-vector-260nw-1040084344.jpg',
-        'email_address': 'test@gmail.com',
+        'picture': 'https://www.shutterstock.com/image-vector/man-icon-vector-260nw-1040084344.jpg',
+        'email': 'test@gmail.com',
         'age': 25,
         'gender': 'other',
         'religion': 'atheist',
@@ -159,13 +162,13 @@ class AppTests(unittest.TestCase):
                                       )
         self.assertEqual(404, result.status_code)
         self.assertTrue(
-            f'Update comment with comment_id 63dbfcf7e8b3b669de1065b9 and user name {user["user_name"]} failed' in result.text)
+            f'Update comment with comment_id 63dbfcf7e8b3b669de1065b9 and user name {user["name"]} failed' in result.text)
 
     @mock.patch('app.DB_CONTROLLER')
     def test_putComment_wrongUser_failure(self, mock_db_controller):
         with APP.app_context():
             headers, data, user = mock_request_info(mock_comment_data)
-            user['user_name'] = 'wrong_test'
+            user['name'] = 'wrong_test'
             mock_db_controller.find_one.return_value = user
             mock_db_controller.find_one.side_effect = [user, mock_chapter_data()]
             update_one_result = mock_db_controller.update_one.return_value
@@ -177,7 +180,7 @@ class AppTests(unittest.TestCase):
                                       )
         self.assertEqual(404, result.status_code)
         self.assertTrue(
-            f'comment with comment_id 63dbfcf7e8b3b669de1065b9 or with username {user["user_name"]} was not found' in result.text)
+            f'comment with comment_id 63dbfcf7e8b3b669de1065b9 or with username {user["name"]} was not found' in result.text)
 
     @mock.patch('app.DB_CONTROLLER')
     def test_putComment_noCommentIdFound_failure(self, mock_db_controller):
@@ -194,7 +197,7 @@ class AppTests(unittest.TestCase):
                                       )
         self.assertEqual(404, result.status_code)
         self.assertTrue(
-            f'comment with comment_id 63dd81295f249633483d6e21 or with username {user["user_name"]} was not found' in result.text)
+            f'comment with comment_id 63dd81295f249633483d6e21 or with username {user["name"]} was not found' in result.text)
 
     @mock.patch('app.DB_CONTROLLER')
     def test_deleteComment_success(self, mock_db_controller):
@@ -228,7 +231,7 @@ class AppTests(unittest.TestCase):
                                          )
         self.assertEqual(404, result.status_code)
         self.assertTrue(
-            f'deleting comment with comment_id 63dd44a355621619543757c0 and user name {user["user_name"]} under '
+            f'deleting comment with comment_id 63dd44a355621619543757c0 and user name {user["name"]} under '
             f'chapter with chapter_id 63dc389d0bb56cd596d575b9 failed' in result.text)
 
 

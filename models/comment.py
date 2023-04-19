@@ -8,8 +8,8 @@ from .objectid import PydanticObjectId
 
 class Comment(BaseModel):
     id: Optional[PydanticObjectId] = Field(None, alias="_id")
-    user_name: str
-    profile_picture_url: str
+    name: str
+    picture: str
     content: str
     date_added: Optional[datetime] = datetime.now()
     date_updated: Optional[datetime] = datetime.now()
