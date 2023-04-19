@@ -1,16 +1,17 @@
-from flask import Flask, request, jsonify
-from flask_jwt_extended import JWTManager, create_access_token
+import requests
 from bson.objectid import ObjectId
+from flask import Flask, request, jsonify
+from flask_caching import Cache
+from flask_cors import CORS
+from flask_jwt_extended import JWTManager, create_access_token
 
+from app_utils import PermissionRequired
+from config import GOOGLE_CLIENT_ID, GOOGLE_SECRET_KEY, DB_NAME, USERS_COLLECTION, CHAPTERS_COLLECTION_NAME
+from db_services import get_db_controller
 from models.chapter import Chapter
 from models.chapter_update import ChapterUpdate
 from models.comment import Comment
-from models.user import User, verify_password, Role
-from flask_cors import CORS
-from flask_caching import Cache
-
-from db_services import get_db_controller
-from app_utils import permission_required
+from models.user import User, Role
 
 APP = Flask(__name__)
 APP.config.from_object('config.Config')
@@ -20,45 +21,36 @@ CACHE = Cache(APP)
 CORS(APP)
 JWT = JWTManager(APP)
 
-DB_NAME = 'tanakhs'
-CHAPTERS_COLLECTION_NAME = 'chapters'
-USERS_COLLECTION = 'users'
 DB_CONTROLLER = get_db_controller()
 
 
-@APP.route('/api/v1/signup', methods=['POST'])
-def signup():
-    new_user = request.get_json()
-    new_user['role'] = Role.DEFAULT.value
-
-    user_from_db = DB_CONTROLLER.find_one(DB_NAME, USERS_COLLECTION,
-                                          {'user_name': new_user['user_name']})  # check if user exist
-    if user_from_db:
-        return jsonify({'msg': 'Username already exists'}), 409
-
-    try:
-        user_model = User(**new_user)
-        DB_CONTROLLER.insert_one(DB_NAME, USERS_COLLECTION, user_model.to_bson())
-    except Exception:
-        return jsonify({'msg': 'Cant create user, check fields in request'}), 400
-
-    return jsonify({'msg': 'User created successfully'}), 201
-
-
-@APP.route('/api/v1/login', methods=['POST'])
+@APP.route('/api/v1/google_login', methods=['POST'])
 def login():
-    login_details = request.get_json()
+    auth_code = request.get_json()['code']
+
+    data = {
+        'code': auth_code,
+        'client_id': GOOGLE_CLIENT_ID,  # client ID
+        'client_secret': GOOGLE_SECRET_KEY,  # client secret
+        'redirect_uri': 'postmessage',
+        'grant_type': 'authorization_code'
+    }
+
+    response = requests.post('https://oauth2.googleapis.com/token', data=data).json()
+    headers = {
+        'Authorization': f'Bearer {response["access_token"]}'
+    }
+    user_info = requests.get('https://www.googleapis.com/oauth2/v3/userinfo', headers=headers).json()
+
     user_from_db = DB_CONTROLLER.find_one(DB_NAME, USERS_COLLECTION,
-                                          {'user_name': login_details['user_name']})  # search for user in database
+                                          {'email': user_info['email']})  # search for user in database
 
     if not user_from_db:
-        return jsonify({'msg': 'The user does not exists, you need to sign up'}), 403
+        user_model = User(**user_info)
+        DB_CONTROLLER.insert_one(DB_NAME, USERS_COLLECTION, user_model.to_bson())
 
-    if not verify_password(user_from_db['password'], login_details['password']):
-        return jsonify({'msg': 'The password is incorrect'}), 401
-
-    access_token = create_access_token(identity=user_from_db['user_name'])  # create jwt token
-    return jsonify(access_token=access_token), 200
+    jwt = create_access_token(identity=user_info['email'])  # create jwt token
+    return jsonify(jwt=jwt), 200
 
 
 @APP.route('/api/v1/chapters', methods=['GET'])
@@ -82,7 +74,7 @@ def get_chapter(chapter_id):
 
 
 @APP.route('/api/v1/chapter/<string:chapter_id>', methods=['PUT'])
-@permission_required(Role.ADMIN)
+@PermissionRequired(Role.ADMIN)
 def update_chapter(chapter_id):
     try:
         updated_chapter = ChapterUpdate(**request.get_json())
@@ -99,7 +91,7 @@ def update_chapter(chapter_id):
 
 
 @APP.route('/api/v1/chapter', methods=['POST'])
-@permission_required(Role.ADMIN)
+@PermissionRequired(Role.ADMIN)
 def post_chapter():
     try:
         chapter = Chapter(**request.get_json())
@@ -115,12 +107,12 @@ def post_chapter():
 
 
 @APP.route('/api/v1/comment/<string:chapter_id>', methods=['POST'])
-@permission_required(Role.DEFAULT)
+@PermissionRequired(Role.DEFAULT)
 def post_comment(current_user, chapter_id):
     new_comment = request.get_json()
     new_comment['_id'] = ObjectId()
-    new_comment['user_name'] = current_user.user_name
-    new_comment['profile_picture_url'] = current_user.profile_picture_url
+    new_comment['name'] = current_user.name
+    new_comment['picture'] = current_user.picture
 
     try:
         comment = Comment(**new_comment)
@@ -133,11 +125,11 @@ def post_comment(current_user, chapter_id):
     if update_result.matched_count == 0:
         return jsonify({'msg': f'Chapter with chapter_id {chapter_id} not found', '_id': chapter_id}), 404
 
-    return jsonify({'msg': 'Post created successfully', '_id': str(comment.id)}), 202
+    return jsonify({'msg': 'Comment created successfully', '_id': str(comment.id)}), 202
 
 
 @APP.route('/api/v1/comment/<string:chapter_id>/<string:comment_id>', methods=['PUT'])
-@permission_required(Role.DEFAULT)
+@PermissionRequired(Role.DEFAULT)
 def update_comment(current_user, chapter_id, comment_id):
     chapter = DB_CONTROLLER.find_one(DB_NAME, CHAPTERS_COLLECTION_NAME, {"_id": ObjectId(chapter_id)})
     if not chapter:
@@ -148,20 +140,20 @@ def update_comment(current_user, chapter_id, comment_id):
     comments = chapter.get("comments")
     comment_to_update, comment_index = None, None
     for comment in comments:
-        if ObjectId(comment["_id"]) == ObjectId(comment_id) and comment["user_name"] == current_user.user_name:
+        if ObjectId(comment["_id"]) == ObjectId(comment_id) and comment["name"] == current_user.name:
             comment_to_update = comment
             comment_index = comments.index(comment)
             break
 
     if not comment_to_update:
         return jsonify(
-            {'msg': f'comment with comment_id {comment_id} or with username {current_user.user_name} was not found',
+            {'msg': f'comment with comment_id {comment_id} or with username {current_user.name} was not found',
              '_id': chapter_id}), 404
 
     new_comment = request.get_json()
     new_comment['_id'] = comment_to_update['_id']
-    new_comment['user_name'] = current_user.user_name
-    new_comment['profile_picture_url'] = current_user.profile_picture_url
+    new_comment['name'] = current_user.name
+    new_comment['picture'] = current_user.picture
 
     try:
         new_comment = Comment(**new_comment)
@@ -176,18 +168,18 @@ def update_comment(current_user, chapter_id, comment_id):
 
     if result.modified_count == 0:
         return jsonify(
-            {'msg': f'Update comment with comment_id {comment_id} and user name {current_user.user_name} failed'}), 404
+            {'msg': f'Update comment with comment_id {comment_id} and user name {current_user.name} failed'}), 404
 
     return jsonify({'msg': 'Comment updated successfully'}), 202
 
 
 @APP.route('/api/v1/comment/<string:chapter_id>/<string:comment_id>', methods=['DELETE'])
-@permission_required(Role.DEFAULT)
+@PermissionRequired(Role.DEFAULT)
 def delete_comment(current_user, chapter_id, comment_id):
     comment_to_delete = {"_id": ObjectId(chapter_id), "comments._id": ObjectId(comment_id),
-                         "comments.user_name": current_user.user_name}
+                         "comments.name": current_user.name}
 
-    query_to_delete = {"$pull": {"comments": {"_id": ObjectId(comment_id), "user_name": current_user.user_name}}}
+    query_to_delete = {"$pull": {"comments": {"_id": ObjectId(comment_id), "name": current_user.name}}}
 
     result = DB_CONTROLLER.update_one(DB_NAME, CHAPTERS_COLLECTION_NAME, comment_to_delete, query_to_delete)
 
@@ -195,7 +187,7 @@ def delete_comment(current_user, chapter_id, comment_id):
         return jsonify(
             {
                 'msg': f'deleting comment with comment_id {comment_id} and user name '
-                       f'{current_user.user_name} under chapter with chapter_id {chapter_id} failed'}), 404
+                       f'{current_user.name} under chapter with chapter_id {chapter_id} failed'}), 404
 
     return jsonify({'msg': 'Comment deleted successfully'}), 202
 
