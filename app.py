@@ -53,6 +53,7 @@ def login():
     return jsonify(jwt=jwt, user=User(**user_info).to_json()), 200
 
 
+
 @APP.route('/api/v1/chapters', methods=['GET'])
 @CACHE.cached(timeout=30, query_string=True)
 def get_chapters():
