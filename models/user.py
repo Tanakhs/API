@@ -12,6 +12,7 @@ class Religion(Enum):
     MUSLIM = "muslim"
     CHRISTIAN = "christian"
     ATHEIST = "atheist"
+    OTHER = "other"
 
 
 class Gender(Enum):
@@ -34,7 +35,7 @@ class User(BaseModel):
     email: str
     age: Optional[int]
     gender: Gender = Gender.OTHER
-    religion: Religion = Religion.JEWISH
+    religion: Religion = Religion.OTHER
     date_added: Optional[datetime] = datetime.now()
     role: Role = Role.DEFAULT
 
