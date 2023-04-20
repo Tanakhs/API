@@ -50,7 +50,7 @@ def login():
         DB_CONTROLLER.insert_one(DB_NAME, USERS_COLLECTION, user_model.to_bson())
 
     jwt = create_access_token(identity=user_info['email'])  # create jwt token
-    return jsonify(jwt=jwt), 200
+    return jsonify(jwt=jwt, user=User(**user_info).to_json()), 200
 
 
 @APP.route('/api/v1/chapters', methods=['GET'])
