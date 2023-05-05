@@ -2,7 +2,7 @@ import requests
 from bson.objectid import ObjectId
 from flask import Flask, request, jsonify
 from flask_caching import Cache
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 from flask_jwt_extended import JWTManager, create_access_token
 
 from app_utils import PermissionRequired
@@ -15,10 +15,11 @@ from models.user import User, Role
 
 APP = Flask(__name__)
 APP.config.from_object('config.Config')
-
+APP.config['JWT_TOKEN_LOCATION'] = ['cookies']
+APP.config['JWT_COOKIE_CSRF_PROTECT'] = False  # only on dev
 CACHE = Cache(APP)
 
-CORS(APP)
+CORS(APP, supports_credentials=True)  # only on dev
 JWT = JWTManager(APP)
 
 DB_CONTROLLER = get_db_controller()
@@ -30,8 +31,8 @@ def login():
 
     data = {
         'code': auth_code,
-        'client_id': GOOGLE_CLIENT_ID,  # client ID
-        'client_secret': GOOGLE_SECRET_KEY,  # client secret
+        'client_id': GOOGLE_CLIENT_ID,  # client ID from the credential at google developer console
+        'client_secret': GOOGLE_SECRET_KEY,  # client secret from the credential at google developer console
         'redirect_uri': 'postmessage',
         'grant_type': 'authorization_code'
     }
@@ -49,8 +50,11 @@ def login():
         user_model = User(**user_info)
         DB_CONTROLLER.insert_one(DB_NAME, USERS_COLLECTION, user_model.to_bson())
 
-    jwt = create_access_token(identity=user_info['email'])  # create jwt token
-    return jsonify(jwt=jwt, user=User(**user_info).to_json()), 200
+    jwt_token = create_access_token(identity=user_info['email'])  # create jwt token
+    response = jsonify(user=user_info)
+    response.set_cookie('access_token_cookie', value=jwt_token, secure=False)
+
+    return response, 200
 
 
 @APP.route('/api/v1/chapters', methods=['GET'])
@@ -193,4 +197,4 @@ def delete_comment(current_user, chapter_id, comment_id):
 
 
 if __name__ == '__main__':
-    APP.run(debug=True, host='0.0.0.0')
+    APP.run(debug=True, host='localhost')
