@@ -9,6 +9,7 @@ from .objectid import PydanticObjectId
 class Comment(BaseModel):
     id: Optional[PydanticObjectId] = Field(None, alias="_id")
     name: str
+    email: str
     picture: str
     content: str
     date_added: Optional[datetime] = datetime.now()

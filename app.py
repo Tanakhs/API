@@ -31,26 +31,32 @@ def login():
 
     data = {
         'code': auth_code,
-        'client_id': GOOGLE_CLIENT_ID,  # client ID from the credential at google developer console
-        'client_secret': GOOGLE_SECRET_KEY,  # client secret from the credential at google developer console
+        # client ID from the credential at google developer console
+        'client_id': GOOGLE_CLIENT_ID,
+        # client secret from the credential at google developer console
+        'client_secret': GOOGLE_SECRET_KEY,
         'redirect_uri': 'postmessage',
         'grant_type': 'authorization_code'
     }
 
-    response = requests.post('https://oauth2.googleapis.com/token', data=data).json()
+    response = requests.post(
+        'https://oauth2.googleapis.com/token', data=data).json()
     headers = {
         'Authorization': f'Bearer {response["access_token"]}'
     }
-    user_info = requests.get('https://www.googleapis.com/oauth2/v3/userinfo', headers=headers).json()
+    user_info = requests.get(
+        'https://www.googleapis.com/oauth2/v3/userinfo', headers=headers).json()
 
     user_from_db = DB_CONTROLLER.find_one(DB_NAME, USERS_COLLECTION,
                                           {'email': user_info['email']})  # search for user in database
 
     if not user_from_db:
         user_model = User(**user_info)
-        DB_CONTROLLER.insert_one(DB_NAME, USERS_COLLECTION, user_model.to_bson())
+        DB_CONTROLLER.insert_one(
+            DB_NAME, USERS_COLLECTION, user_model.to_bson())
 
-    jwt_token = create_access_token(identity=user_info['email'])  # create jwt token
+    jwt_token = create_access_token(
+        identity=user_info['email'])  # create jwt token
     response = jsonify(user=user_info)
     response.set_cookie('access_token_cookie', value=jwt_token, secure=False)
 
@@ -68,7 +74,8 @@ def get_chapters():
 
 @APP.route('/api/v1/chapter/<string:chapter_id>', methods=['GET'])
 def get_chapter(chapter_id):
-    retrieved_chapter = DB_CONTROLLER.find_one(DB_NAME, CHAPTERS_COLLECTION_NAME, {'_id': ObjectId(chapter_id)})
+    retrieved_chapter = DB_CONTROLLER.find_one(
+        DB_NAME, CHAPTERS_COLLECTION_NAME, {'_id': ObjectId(chapter_id)})
     if not retrieved_chapter:
         return jsonify({'msg': f'Chapter with chapter_id {chapter_id} was not found', '_id': chapter_id}), 404
 
@@ -102,7 +109,8 @@ def post_chapter():
     except Exception:
         return jsonify({'msg': 'Chapter is not in the correct schema'}), 400
 
-    new_chapter_id = DB_CONTROLLER.insert_one(DB_NAME, CHAPTERS_COLLECTION_NAME, chapter.to_bson())
+    new_chapter_id = DB_CONTROLLER.insert_one(
+        DB_NAME, CHAPTERS_COLLECTION_NAME, chapter.to_bson())
 
     if not new_chapter_id:
         return jsonify({'msg': 'Chapter could not be created'}), 500
@@ -116,6 +124,7 @@ def post_comment(current_user, chapter_id):
     new_comment = request.get_json()
     new_comment['_id'] = ObjectId()
     new_comment['name'] = current_user.name
+    new_comment['email'] = current_user.email
     new_comment['picture'] = current_user.picture
 
     try:
@@ -135,7 +144,8 @@ def post_comment(current_user, chapter_id):
 @APP.route('/api/v1/comment/<string:chapter_id>/<string:comment_id>', methods=['PUT'])
 @PermissionRequired(Role.DEFAULT)
 def update_comment(current_user, chapter_id, comment_id):
-    chapter = DB_CONTROLLER.find_one(DB_NAME, CHAPTERS_COLLECTION_NAME, {"_id": ObjectId(chapter_id)})
+    chapter = DB_CONTROLLER.find_one(DB_NAME, CHAPTERS_COLLECTION_NAME, {
+                                     "_id": ObjectId(chapter_id)})
     if not chapter:
         return jsonify(
             {'msg': f'chapter with chapter_id {chapter_id} was not found', '_id': chapter_id}), 404
@@ -157,6 +167,7 @@ def update_comment(current_user, chapter_id, comment_id):
     new_comment = request.get_json()
     new_comment['_id'] = comment_to_update['_id']
     new_comment['name'] = current_user.name
+    new_comment['email'] = current_user.email
     new_comment['picture'] = current_user.picture
 
     try:
@@ -183,9 +194,11 @@ def delete_comment(current_user, chapter_id, comment_id):
     comment_to_delete = {"_id": ObjectId(chapter_id), "comments._id": ObjectId(comment_id),
                          "comments.name": current_user.name}
 
-    query_to_delete = {"$pull": {"comments": {"_id": ObjectId(comment_id), "name": current_user.name}}}
+    query_to_delete = {"$pull": {"comments": {
+        "_id": ObjectId(comment_id), "name": current_user.name}}}
 
-    result = DB_CONTROLLER.update_one(DB_NAME, CHAPTERS_COLLECTION_NAME, comment_to_delete, query_to_delete)
+    result = DB_CONTROLLER.update_one(
+        DB_NAME, CHAPTERS_COLLECTION_NAME, comment_to_delete, query_to_delete)
 
     if result.modified_count == 0:
         return jsonify(
